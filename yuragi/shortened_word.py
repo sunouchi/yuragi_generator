@@ -28,6 +28,13 @@ class ShortenedWordLazy:
         self.features = self._get_features(text)
         pass
 
+    def _clean_text(self, text):
+        '''textをから余分な文字列を削除する
+        '''
+        text = remove_subtitle(text)
+        text = remove_series(text)
+        return text
+
     def _get_features(self, text, use_neologd=False):
         ''' 素性を取得する
 
@@ -98,13 +105,6 @@ class ShortenedWordLazy:
 class SingleShortenedWord(ShortenedWordLazy):
     '''単一の語から成り立つ短縮語
     '''
-
-    def _clean_text(self, text):
-        '''textをから余分な文字列を削除する
-        '''
-        text = remove_subtitle(text)
-        text = remove_series(text)
-        return text
 
     def _make_extracted_words(self):
         '''抽出した語をそのままゆらぎ候補語として取り出す
@@ -186,13 +186,6 @@ class CombinedShortenedWord(ShortenedWordLazy):
     '''複数の語を組み合わせて成立する短縮語
     '''
     # _tokens = {}
-
-    def _clean_text(self, text):
-        '''textをから余分な文字列を削除する
-        '''
-        text = remove_subtitle(text)
-        text = remove_series(text)
-        return text
 
     def _tokenize_text(self):
         '''textを形態素に分解する

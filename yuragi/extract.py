@@ -1,7 +1,7 @@
 import utils
 
 
-def extract_subject(features: dict):
+def extract_subject(features: list):
     '''主語を取り出す
 
     主語の次に現れる助詞を見つけ、その一つ前にある語を主語として抽出する。
@@ -33,7 +33,7 @@ def extract_subject(features: dict):
     return words
 
 
-def extract_pronouns(features: dict):
+def extract_pronouns(features: list):
     '''代名詞を取り出す
     '''
     words = []
@@ -43,7 +43,7 @@ def extract_pronouns(features: dict):
     return words
 
 
-def extract_proper_nouns(features: dict):
+def extract_proper_nouns(features: list):
     '''固有名詞を取り出す
     '''
     words = []
@@ -53,7 +53,7 @@ def extract_proper_nouns(features: dict):
     return words
 
 
-def extract_suffix(features: dict):
+def extract_suffix(features: list):
     '''接尾語を取り出す
     '''
     words = []
@@ -63,7 +63,7 @@ def extract_suffix(features: dict):
     return words
 
 
-def extract_number(features: dict):
+def extract_number(features: list):
     '''数字を取り出す
     '''
     words = []
