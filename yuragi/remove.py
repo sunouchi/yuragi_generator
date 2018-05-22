@@ -2,7 +2,7 @@ import re
 
 
 def remove_subtitle(text: str):
-    '''サブタイトルを削除する
+    '''サブタイトルを削除した、文字列を返す
 
     「〜」で囲われた部分をサブタイトルと見なす
     ほかにもサブタイトルと判定できそうなルールが見つかったら、鋭意追加していく
@@ -11,7 +11,7 @@ def remove_subtitle(text: str):
 
 
 def remove_series(text: str):
-    '''シリーズ番号を削除する
+    '''シリーズ番号を削除した、文字列を返す
 
     一続きのシリーズであることを示す語を取り除く。
     例：
@@ -29,7 +29,7 @@ def remove_series(text: str):
 
 
 def remove_person_name(text: str):
-    '''人名を削除する
+    '''人名を削除した、文字列を返す
 
     未実装。とりあえずこれ無しでも行けそうなので、後で余裕があれば実装する。
     '''
@@ -37,7 +37,7 @@ def remove_person_name(text: str):
 
 
 def remove_version_number(text: str):
-    '''バージョン番号を削除する
+    '''バージョン番号を削除した、文字列を返す
 
     未実装。とりあえずこれ無しでも行けそうなので、後で余裕があれば実装する。
     '''
@@ -45,15 +45,15 @@ def remove_version_number(text: str):
 
 
 def remove_catchcopy(text: str):
-    '''キャッチコピーのような文字列を削除する
+    '''キャッチコピーのような文字列を削除した、文字列を返す
 
     未実装。とりあえずこれ無しでも行けそうなので、後で余裕があれば実装する。
     '''
     return text
 
 
-def remove_noise_words(features: dict):
-    '''ノイズを思われる語を削除する
+def remove_noise_words(features: list) -> list:
+    '''ノイズと思われる語を削除した、リストを返す
 
     ノイズとは、短縮語として用いられないと思われる語のこと。
     例えば、
@@ -64,20 +64,9 @@ def remove_noise_words(features: dict):
     - 非自立動詞（ごらん、ちょうだい、しまう、ちゃう）
     など。
     '''
-    index_list = []
+    cleaned_features = []
     for index, features in enumerate(features):
-        if re.search('助詞|助動詞|記号', features[1]) or \
-                features[2] == '非自立':  # 名詞と動詞の非自立
-            index_list.append(index)
-    if len(index_list) > 0:
-        for i in sorted(index_list, reverse=True):
-            features.pop(i)
-    return features
-
-
-def _remove_1word_verb(text: str):
-    '''1字の動詞を消す
-
-    未実装
-    '''
-    return text
+        if not re.search('助詞|助動詞|記号', features[1]) and \
+                not features[2] == '非自立':  # 名詞と動詞の非自立
+            cleaned_features.append(features)
+    return cleaned_features

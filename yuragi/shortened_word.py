@@ -32,7 +32,7 @@ class ShortenedWordLazy:
         ''' 素性を取得する
 
         MeCabでデフォルト出力されるフォーマットは以下の通り。
-        表層形\t品詞,品詞細分類1,品詞細分類2,品詞細分類3,活用型,活用形,原形,読み,発音
+        [表層形, 品詞, 品詞細分類1, 品詞細分類2, 品詞細分類3, 活用型, 活用形, 原形, 読み, 発音]
         via: http://taku910.github.io/mecab/#format
         '''
         if use_neologd:
@@ -90,7 +90,8 @@ class ShortenedWordLazy:
             return self.words
         result = []
         for pattern_name, word_list in self.words.items():
-            result.extend(word_list)
+            if word_list is not None:
+                result.extend(word_list)
         return result
 
 
@@ -98,10 +99,12 @@ class SingleShortenedWord(ShortenedWordLazy):
     '''単一の語から成り立つ短縮語
     '''
 
-    # def _make_removed_words(self):
-    #     '''除去した語をそのままゆらぎ候補語として取り出す
-    #     '''
-    #     pass
+    def _clean_text(self, text):
+        '''textをから余分な文字列を削除する
+        '''
+        text = remove_subtitle(text)
+        text = remove_series(text)
+        return text
 
     def _make_extracted_words(self):
         '''抽出した語をそのままゆらぎ候補語として取り出す
@@ -170,8 +173,7 @@ class SingleShortenedWord(ShortenedWordLazy):
         words = {}
 
         # サブタイトルとシリーズ番号を除去
-        cleaned_text = remove_subtitle(self.text)
-        cleaned_text = remove_series(cleaned_text)
+        cleaned_text = self._clean_text(self.text)
 
         # wordsに追加する
         words['divided'] = self._make_divided_titles(self.text)
@@ -185,10 +187,12 @@ class CombinedShortenedWord(ShortenedWordLazy):
     '''
     # _tokens = {}
 
-    def _clean_text(self):
+    def _clean_text(self, text):
         '''textをから余分な文字列を削除する
         '''
-        pass
+        text = remove_subtitle(text)
+        text = remove_series(text)
+        return text
 
     def _tokenize_text(self):
         '''textを形態素に分解する
@@ -201,86 +205,71 @@ class CombinedShortenedWord(ShortenedWordLazy):
         '''
         pass
 
-    def _make_acronym_combination_wordss(self, features_list: dict):
-        '''2単語の頭文字を組み合わせてゆらぎ候補語を作る
-        このような短縮語を作るためのメソッド。
+    def _reflex(self, word_a: list, word_b: list):
+        '''単語Aの語リストと、単語Bの語リストから、
+        単語Aを先頭にした結合語を返す
+        '''
+        words = []
+        for wa in word_a:
+            for wb in word_b:
+                words.append(wa + wb)
+        return words
 
+    def _make_acronym_combination_words(self, features_list: list):
+        '''2単語の頭文字の組み合わせで構成される、ゆらぎ候補語を作り、リストで返す
+
+        最終的にはこういう短縮語を求めることを目的としている。
         例：ボク運（ボク、運命の人です）
             真夜プリ（真夜中のプリンス）
             ハガレン（鋼の錬金術師）
 
-        ある語を、原形1字、原形2字、ひらがな2字、カタカナ2字の4パターンがあると想定し、
+        ある語を、表層形2字、表層形1字、カタカナ2字、ひらがな2字の4パターンがあると想定し、
         2単語 * 4パターン の短縮語を作成する。
         '''
+        # 素性から助詞や助動詞など不要なワードを除去する
+        features = remove_noise_words(features_list)
 
-        '''
-        単語の組み合わせによって、ゆらぎ語の候補を生成する
+        # 素性から短縮語の素になる二次元配列を作る
+        # 短縮語として用いられそうな語を、
+        # 表層形2字、表層形1字、カタカナ2字、ひらがな2字の4種類ずつの
+        # 配列を作る
+        # 
+        # 例：「ボク、運命の人です」の場合
+        # [['ボク', 'ボ', 'ボク', 'ぼく']
+        #  ['運命', '運', 'ウン', 'うん']
+        #  ['人', '人', 'ヒト', 'ひと']]
+        words_a = []
+        for i, feature in enumerate(features):
+            words_a.append([])
+            words_a[i].append(feature[0][:2])  # 表層形2字
+            words_a[i].append(feature[0][:1])  # 表層形1字
+            words_a[i].append(feature[-1][:2])  # カタカナ2字
+            words_a[i].append(jaconv.kata2hira(feature[-1][:2]))  # ひらがな2字
 
-        MeCabから出力された素性リストをもとに、
-        1字あるいは2字の頭字語を結びつけて短縮語のリストを作る。
+        # 短縮語の素を組み合わせて、結合語を作る
+        # 総当たりで組み合わせた語のリストを作る
+        # 単語Aが単語Bよりも先にくるもののみ作成する
+        words_b = words_a
+        combined_words = []
+        for i, word_a in enumerate(words_a):
+            for j, word_b in enumerate(words_b):
+                if i < j:
+                    combined_words.extend(self._reflex(word_a, word_b))                    
 
-        〈例〉
-        番組名「ボク、運命の人です。」から、ゆらぎ語「ボク運」を導き出したい。
-        「ボク運」を含んだ、短縮語と考えられる組み合わせのリストを作成する。
-        In : 'ボク、運命の人です。'
-        Out: ['ボク運命', 'ボク運', 'ボクウン', 'ボウン', 'ボクうん', 'ボうん', 'ボク人', 'ボク人', 'ボクヒト', 'ボヒト', 'ボクひと', 'ボひと', '運命人', '運人', 'ウン人', 'ウン人', 'うん人', 'うん人', '運命人', '運命ヒト', '運ヒト', '運命ひと', '運ひと', '運人']
-        '''
-        result = []
-        for i, w in enumerate(features_list):
-            for j in range(i+1, len(features_list)):
-                tmp = []
-                word = features_list[i][0][:2]
-                nword = features_list[j][0][:2]
-                # 語に漢字が含まれている場合、読み仮名をカタカナとひらがなで取得する。
-                # MeCab素性に読み仮名が含まれている場合、len(features_list[x])が8以上になっている
-                if (len(features_list[i])-1 >= 8) and \
-                        features_list[i][-1] is not '*':
-                    word_kata = features_list[i][-1][:2]
-                    word_hira = jaconv.kata2hira(word_kata)
-                else:
-                    word_kata = ''
-                if (len(features_list[j])-1 >= 8) and \
-                        features_list[j][-1] is not '*':
-                    nword_kata = features_list[j][-1][:2]
-                    nword_hira = jaconv.kata2hira(nword_kata)
-                else:
-                    nword_kata = ''
-                # ==================== ゆらぎ語の生成 ====================
-                # 変換せずにそのままペアを作る
-                tmp.append(word+nword)                  # 例:兄貴困っ
-                # 漢字の場合は1字のみのペアも作る
-                if utils.is_kanji(word[0]):
-                    tmp.append(word[0]+nword)           # 例:兄困っ
-                    if word_kata:
-                        tmp.append(word_kata+nword)     # 例:アニ困っ
-                        tmp.append(word_kata+nword[0])  # 例:アニ困
-                        tmp.append(word_hira+nword)     # 例:あに困っ
-                        tmp.append(word_hira+nword[0])  # 例:あに困
-                if utils.is_kanji(nword[0]):
-                    tmp.append(word+nword[0])           # 例:兄貴困
-                    if nword_kata:
-                        tmp.append(word+nword_kata)     # 例:兄貴コマ
-                        tmp.append(word[0]+nword_kata)  # 例:兄コマ
-                        tmp.append(word+nword_hira)     # 例:兄貴こま
-                        tmp.append(word[0]+nword_hira)  # 例:兄こま
-                # if utils.is_kanji(word[0]) and utils.is_kanji(nword[0]):
-                #     tmp.append(word[0]+nword[0])       #例:兄困
-                if word_kata and len(word_kata)-1 >= 8:
-                    tmp.append(word_kata+nword_kata)   # 例:アニコマ
-                    tmp.append(word_hira+nword_hira)   # 例:あにこま
-
-                # 読み仮名があった場合、アルファベットに変換する
-                # 例: 9係 -> 9gakari
-                word_kata_orig = features_list[i][-1] if not word_kata == '' else ''
-                nword_kata_orig = features_list[j][-1] if not nword_kata == '' else ''
-                tmp.append(word + utils.kana2romaji(nword_kata_orig))
-                tmp.append(word_kata + utils.kana2romaji(nword_kata_orig))
-                tmp.append(utils.kana2romaji(word_kata_orig) + nword)
-                tmp.append(utils.kana2romaji(word_kata_orig) + nword_kata)
-                tmp.append(utils.kana2romaji(word_kata_orig) + utils.kana2romaji(nword_kata_orig))
-
-                result.extend(tmp)
-        return result
+        # 重複をなくしてリストで返す
+        return list(set(combined_words))
 
     def generate(self):
-        pass
+        words = {}
+
+        # サブタイトルとシリーズ番号を除去
+        cleaned_text = self._clean_text(self.text)
+
+        # 素性に分解する
+        features = self._get_features(cleaned_text)
+
+        # wordsに追加する
+        words['combined'] = self._make_acronym_combination_words(features)
+        self.words = words
+        return self.words
+
