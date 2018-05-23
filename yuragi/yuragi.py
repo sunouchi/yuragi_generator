@@ -12,7 +12,7 @@ class Yuragi(SingleShortenedWord, CombinedShortenedWord):
         words['divided'] = self._make_divided_titles(self.text)
         words['unique_katakana'] = self._make_unique_katakana(cleaned_text)
 
-        # 素性に分解する
+        # 素性に分解して、結合する
         features = self._get_features(cleaned_text)
         words['combined'] = self._make_acronym_combination_words(features)
 

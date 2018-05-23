@@ -26,7 +26,6 @@ class ShortenedWordLazy:
     def __init__(self, text, *args, **kwargs):
         self.text = text
         self.features = self._get_features(text)
-        pass
 
     def _clean_text(self, text):
         '''textをから余分な文字列を削除する
@@ -77,9 +76,6 @@ class ShortenedWordLazy:
                 cleaned_words.append(word)
         return cleaned_words
 
-    def generate(self):
-        pass
-
     def get_words(self, debug=False):
         '''ゆらぎ候補語を取得する処理
 
@@ -108,6 +104,8 @@ class SingleShortenedWord(ShortenedWordLazy):
 
     def _make_extracted_words(self):
         '''抽出した語をそのままゆらぎ候補語として取り出す
+
+        TODO 必要あれば実装する
         '''
         pass
 
@@ -185,13 +183,6 @@ class SingleShortenedWord(ShortenedWordLazy):
 class CombinedShortenedWord(ShortenedWordLazy):
     '''複数の語を組み合わせて成立する短縮語
     '''
-    # _tokens = {}
-
-    def _tokenize_text(self):
-        '''textを形態素に分解する
-        '''
-        pass
-
     def _remove_noise_from_tokens(self):
         '''形態素から、助詞や助動詞や記号など
         短縮語として用いられる可能性の低い語を除去する
