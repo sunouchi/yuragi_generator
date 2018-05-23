@@ -5,7 +5,7 @@ import pprint
 pp = pprint.PrettyPrinter(indent=4)
 
 
-def test_lazy(text, target_word, obj):
+def test_common(text, target_word, obj):
     debug = True
     words = obj.get_words()
     debug_words = obj.get_words(debug=debug)
@@ -23,7 +23,7 @@ def test_single(text, target_word):
     '''
     single_word = SingleShortenedWord(text)
     single_word.generate()
-    test_lazy(text, target_word, single_word)
+    test_common(text, target_word, single_word)
 
 
 def test_combined(text, target_word):
@@ -31,7 +31,7 @@ def test_combined(text, target_word):
     '''
     combined_word = CombinedShortenedWord(text)
     combined_word.generate()
-    test_lazy(text, target_word, combined_word)
+    test_common(text, target_word, combined_word)
 
 
 def test_yuragi(text, target_word):
@@ -39,7 +39,7 @@ def test_yuragi(text, target_word):
     '''
     yuragi_word = Yuragi(text)
     yuragi_word.generate()
-    test_lazy(text, target_word, yuragi_word)
+    test_common(text, target_word, yuragi_word)
 
 
 def main():

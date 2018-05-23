@@ -88,7 +88,7 @@ class ShortenedWordBase:
         for pattern_name, word_list in self.words.items():
             if word_list is not None:
                 result.extend(word_list)
-        return result
+        return list(set(result))
 
 
 class SingleShortenedWord(ShortenedWordBase):
