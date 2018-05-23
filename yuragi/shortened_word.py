@@ -6,16 +6,9 @@ import utils
 from remove import (
     remove_subtitle,
     remove_series,
-    remove_person_name,
-    remove_version_number,
-    remove_catchcopy,
     remove_noise_words
 )
-
-import pprint
-pp = pprint.PrettyPrinter(compact=True)
-
-NEOLOGD_PATH = '/usr/local/lib/mecab/dic/mecab-ipadic-neologd'
+from settings import NEOLOGD_PATH
 
 
 class ShortenedWordBase:
@@ -217,7 +210,7 @@ class CombinedShortenedWord(ShortenedWordBase):
         # 短縮語として用いられそうな語を、
         # 表層形2字、表層形1字、カタカナ2字、ひらがな2字の4種類ずつの
         # 配列を作る
-        # 
+        #
         # 例：「ボク、運命の人です」の場合
         # [['ボク', 'ボ', 'ボク', 'ぼく']
         #  ['運命', '運', 'ウン', 'うん']
@@ -238,7 +231,7 @@ class CombinedShortenedWord(ShortenedWordBase):
         for i, word_a in enumerate(words_a):
             for j, word_b in enumerate(words_b):
                 if i < j:
-                    combined_words.extend(self._reflex(word_a, word_b))                    
+                    combined_words.extend(self._reflex(word_a, word_b))
 
         # 重複をなくしてリストで返す
         return list(set(combined_words))
@@ -256,4 +249,3 @@ class CombinedShortenedWord(ShortenedWordBase):
         words['combined'] = self._make_acronym_combination_words(features)
         self.words = words
         return self.words
-
