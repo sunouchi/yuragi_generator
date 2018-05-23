@@ -18,7 +18,7 @@ pp = pprint.PrettyPrinter(compact=True)
 NEOLOGD_PATH = '/usr/local/lib/mecab/dic/mecab-ipadic-neologd'
 
 
-class ShortenedWordLazy:
+class ShortenedWordBase:
     text = ''
     words = {}
     features = {}
@@ -98,7 +98,7 @@ class ShortenedWordLazy:
         return result
 
 
-class SingleShortenedWord(ShortenedWordLazy):
+class SingleShortenedWord(ShortenedWordBase):
     '''単一の語から成り立つ短縮語
     '''
 
@@ -180,7 +180,7 @@ class SingleShortenedWord(ShortenedWordLazy):
         return self.words
 
 
-class CombinedShortenedWord(ShortenedWordLazy):
+class CombinedShortenedWord(ShortenedWordBase):
     '''複数の語を組み合わせて成立する短縮語
     '''
     def _remove_noise_from_tokens(self):
